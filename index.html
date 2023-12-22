@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spritesheet-Animation und Pixel</title>
+    <style>
+        #canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <label for="rasterSize">Rastergröße:</label>
+    <input type="range" id="rasterSize" min="1" max="20" value="1">
+
+    <label for="speed">Geschwindigkeit:</label>
+    <input type="range" id="speed" min="1" max="10" value="1">
+
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
+        img.src = 'monster.png';
+        
+        var numFrames = 8; // Anzahl der Frames im Spritesheet
+        var spriteWidth;
+        var spriteHeight;
+        var rasterSize = 1;
+        var animationSpeed = 1; // Geschwindigkeit der Animation
+
+        img.onload = function () {
+            spriteWidth = img.width / numFrames;
+            spriteHeight = img.height;
+            
+            // Setzen Sie die Größe des Canvas entsprechend der Spritegröße
+            canvas.width = spriteWidth;
+            canvas.height = spriteHeight;
+
+            document.getElementById('rasterSize').addEventListener('input', function () {
+                rasterSize = parseInt(this.value, 10);
+            });
+
+            document.getElementById('speed').addEventListener('input', function () {
+                animationSpeed = parseInt(this.value, 10);
+            });
+
+            animateSpritesheet();
+        };
+
+        function animateSpritesheet() {
+            var frameIndex = 0;
+
+            function drawFrame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Zeichnen Sie das aktuelle Frame des Spritesheets
+                ctx.drawImage(img, frameIndex * spriteWidth, 0, spriteWidth, spriteHeight, 0, 0, spriteWidth, spriteHeight);
+
+                // Anwenden des Rasterfilters auf das aktuelle Frame
+                applyRasterFilter(rasterSize);
+
+                // Aktualisieren Sie den Frame-Index für die nächste Iteration
+                frameIndex = (frameIndex + 1) % numFrames;
+
+                // Warten Sie eine kurze Zeitspanne entsprechend der Animationgeschwindigkeit
+                setTimeout(drawFrame, 100 / animationSpeed);
+            }
+
+            // Starten Sie die Animation
+            drawFrame();
+        }
+
+        function applyRasterFilter(rasterSize) {
+            var imgData = ctx.getImageData(0, 0, spriteWidth, spriteHeight);
+
+            for (var x = 0; x < imgData.width; x += rasterSize) {
+                for (var y = 0; y < imgData.height; y += rasterSize) {
+                    var rasterValIndex = (x + y * imgData.width) * 4;
+
+                    var r = imgData.data[rasterValIndex];
+                    var g = imgData.data[rasterValIndex + 1];
+                    var b = imgData.data[rasterValIndex + 2];
+                    var a = imgData.data[rasterValIndex + 3];
+
+                    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + (a / 255) + ')';
+                    ctx.fillRect(x, y, rasterSize, rasterSize);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
